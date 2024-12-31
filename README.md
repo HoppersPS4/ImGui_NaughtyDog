@@ -8,3 +8,8 @@ To add or remove menus, go to **`Drawing.cpp`** and modify the **`mainMenuItems`
 
 # Screenshots
 ![](https://raw.githubusercontent.com/HoppersPS4/ImGui_NaughtyDog/refs/heads/master/Screenshot%202024-12-31%20224426%20(1).png?token=GHSAT0AAAAAAC3HUVR4A2WINOZPIT66NQUUZ3UO6JQ)
+
+# Platform Support
+[PC] ✔
+[PS4] ✘ (WIP)
+[PS5] ✘
