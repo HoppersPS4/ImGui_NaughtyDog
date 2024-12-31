@@ -4,14 +4,51 @@
 #include <format>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 
-LPCSTR Drawing::lpWindowName = "Naughty Dog Debug Menu but ImGui"; // this doesnt need changing
+LPCSTR Drawing::lpWindowName = "Naughty Dog Debug Menu but ImGui";
 ImVec2 Drawing::vWindowSize = { 0, 0 };
 ImGuiWindowFlags Drawing::WindowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize;
 bool Drawing::bDraw = true;
 
 std::unordered_map<std::string, int> selectedIndices;
 std::string currentCategory = "";
+
+enum class MenuCategory
+{
+    None,
+    Display,
+    Rendering,
+    Engine,
+    PlayerMenu,
+    Weapons,
+    GUI,
+    Gameplay,
+    LEDKeyboardEffects,
+    Melee,
+    Levels,
+    NavigatingCharacter,
+    Camera,
+    Cinematics,
+    Tasks
+};
+
+std::unordered_map<std::string, MenuCategory> menuCategoryMap = {
+    {"Display...", MenuCategory::Display},
+    {"Rendering...", MenuCategory::Rendering},
+    {"Engine...", MenuCategory::Engine},
+    {"Player Menu...", MenuCategory::PlayerMenu},
+    {"Weapons...", MenuCategory::Weapons},
+    {"GUI...", MenuCategory::GUI},
+    {"Gameplay...", MenuCategory::Gameplay},
+    {"LED Keyboard Effects...", MenuCategory::LEDKeyboardEffects},
+    {"Melee...", MenuCategory::Melee},
+    {"Levels...", MenuCategory::Levels},
+    {"Navigating Character...", MenuCategory::NavigatingCharacter},
+    {"Camera...", MenuCategory::Camera},
+    {"Cinematics...", MenuCategory::Cinematics},
+    {"Tasks...", MenuCategory::Tasks},
+};
 
 std::vector<std::string> mainMenuItems = {
     "Display...",
@@ -37,6 +74,8 @@ bool showWatermark = true;
 
 ImVec2 watermarkPos;
 float buttonWidth;
+
+std::unordered_map<MenuCategory, std::unique_ptr<char[]>> submenuInputs;
 
 bool Drawing::isActive()
 {
@@ -87,11 +126,8 @@ void Drawing::Draw()
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     watermarkPos = ImVec2(100, viewport->WorkSize.y - 100 - ImGui::GetFontSize());
 
-
     if (isActive())
     {
-
-
         HandleInput();
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.8f));
@@ -132,22 +168,74 @@ void Drawing::Draw()
                 {
                     exit(0);
                 }
-
                 ImGui::PopStyleColor(3);
             }
             else
             {
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Currently in category: %s", currentCategory.c_str());
+                ImGui::Text("Currently in category:");
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", currentCategory.c_str());
                 ImGui::NewLine();
-                ImGui::Text("Use Left Arrow to go back.");
+
+                switch (menuCategoryMap[currentCategory])
+                {
+                case MenuCategory::Display:
+                {
+                    ImGui::Text("Display Menu Options");
+                    break;
+                }
+                case MenuCategory::Rendering:
+                    ImGui::Text("Rendering Menu Options");
+                    break;
+                case MenuCategory::Engine:
+                    ImGui::Text("Engine Menu Options");
+                    break;
+                case MenuCategory::PlayerMenu:
+                {
+                    ImGui::Text("Player Menu Options");
+                    break;
+                }
+                case MenuCategory::Weapons:
+                    ImGui::Text("Weapons Menu Options");
+                    break;
+                case MenuCategory::GUI:
+                    ImGui::Text("GUI Menu Options");
+                    break;
+                case MenuCategory::Gameplay:
+                    ImGui::Text("Gameplay Menu Options");
+                    break;
+                case MenuCategory::LEDKeyboardEffects:
+                    ImGui::Text("LEDKeyboardEffects Menu Options");
+                    break;
+                case MenuCategory::Melee:
+                    ImGui::Text("Melee Menu Options");
+                    break;
+                case MenuCategory::Levels:
+                    ImGui::Text("Levels Menu Options");
+                    break;
+                case MenuCategory::NavigatingCharacter:
+                    ImGui::Text("NavigatingCharacter Menu Options");
+                    break;
+                case MenuCategory::Camera:
+                    ImGui::Text("Camera Menu Options");
+                    break;
+                case MenuCategory::Cinematics:
+                    ImGui::Text("Cinematics Menu Options");
+                    break;
+                case MenuCategory::Tasks:
+                    ImGui::Text("Tasks Menu Options");
+                    break;
+                default:
+                    ImGui::Text("Use Left Arrow to go back.");
+                }
             }
         }
         ImGui::End();
         ImGui::PopStyleVar();
         ImGui::PopStyleColor(3);
-
     }
     ImGui::GetForegroundDrawList()->AddText(watermarkPos, ImColor(255, 255, 255), "Naughty Dog - Debug Menu ImGui Port by hoppers");
+
     ImGui::PopFont();
 
     if (GetAsyncKeyState(VK_INSERT) & 1)
