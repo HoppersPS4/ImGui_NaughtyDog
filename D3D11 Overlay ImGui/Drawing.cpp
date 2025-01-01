@@ -17,6 +17,8 @@ bool Drawing::bDraw = true;
 std::unordered_map<std::string, int> selectedIndices;
 std::string currentCategory = "";
 
+std::unordered_map<std::string, std::unordered_map<std::string, bool>> submenuOptionStates;
+
 enum class MenuCategory
 {
     None,
@@ -71,11 +73,6 @@ std::vector<std::string> mainMenuItems = {
     "Tasks..."
 };
 
-ImFont* customFont = nullptr;
-std::string currentFontName = "Default";
-bool usingCustomFont = false;
-bool showWatermark = true;
-
 ImVec2 watermarkPos;
 float buttonWidth;
 
@@ -88,45 +85,64 @@ bool Drawing::isActive()
 
 void HandleInput()
 {
-    int& selectedIndex = selectedIndices[currentCategory];
-
-    if (GetAsyncKeyState(VK_UP) & 1)
+    if (currentCategory.empty())
     {
-        selectedIndex--;
-        if (selectedIndex < 0)
-            selectedIndex = static_cast<int>(mainMenuItems.size() - 1);
-    }
-    if (GetAsyncKeyState(VK_DOWN) & 1)
-    {
-        selectedIndex++;
-        if (selectedIndex >= static_cast<int>(mainMenuItems.size()))
-            selectedIndex = 0;
-    }
-    if (GetAsyncKeyState(VK_RIGHT) & 1)
-    {
-        if (currentCategory.empty())
+        int& selectedIndex = selectedIndices["main"];
+        if (GetAsyncKeyState(VK_UP) & 1)
+        {
+            selectedIndex--;
+            if (selectedIndex < 0)
+                selectedIndex = static_cast<int>(mainMenuItems.size() - 1);
+        }
+        if (GetAsyncKeyState(VK_DOWN) & 1)
+        {
+            selectedIndex++;
+            if (selectedIndex >= static_cast<int>(mainMenuItems.size()))
+                selectedIndex = 0;
+        }
+        if (GetAsyncKeyState(VK_RIGHT) & 1)
         {
             currentCategory = mainMenuItems[selectedIndex];
-            selectedIndices[currentCategory] = 0;
+
         }
     }
-    if (GetAsyncKeyState(VK_LEFT) & 1)
+    else
     {
-        if (!currentCategory.empty())
+        if (GetAsyncKeyState(VK_LEFT) & 1)
         {
             currentCategory = "";
         }
     }
 }
 
+void HandleSubmenuInput(const std::string& submenu, const std::vector<std::string>& options, int& selectedIndex)
+{
+    if (GetAsyncKeyState(VK_UP) & 1)
+    {
+        selectedIndex--;
+        if (selectedIndex < 0)
+            selectedIndex = static_cast<int>(options.size() - 1);
+    }
+
+    if (GetAsyncKeyState(VK_DOWN) & 1)
+    {
+        selectedIndex++;
+        if (selectedIndex >= static_cast<int>(options.size()))
+            selectedIndex = 0;
+    }
+
+    if (GetAsyncKeyState(VK_RIGHT) & 1)
+    {
+        if (selectedIndex >= 0 && selectedIndex < options.size())
+        {
+            const std::string& selectedOption = options[selectedIndex];
+            submenuOptionStates[submenu][selectedOption] = !submenuOptionStates[submenu][selectedOption];
+        }
+    }
+}
+
 void Drawing::Draw()
 {
-    ImGui::PushFont(customFont != nullptr && usingCustomFont ? customFont : ImGui::GetFont());
-    if (customFont != nullptr && usingCustomFont)
-        ImGui::GetFont()->Scale = 1.0f;
-    else
-        ImGui::GetFont()->Scale = 0.8f;
-
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     watermarkPos = ImVec2(100, viewport->WorkSize.y - 100 - ImGui::GetFontSize());
 
@@ -146,9 +162,10 @@ void Drawing::Draw()
             ImGui::Text("Dev Menu");
             ImGui::Separator();
 
-            int selectedIndex = selectedIndices[currentCategory];
+
             if (currentCategory.empty())
             {
+                int selectedIndex = selectedIndices["main"];
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 4));
                 for (size_t i = 0; i < mainMenuItems.size(); i++)
                 {
@@ -184,8 +201,46 @@ void Drawing::Draw()
                 switch (menuCategoryMap[currentCategory])
                 {
                 case MenuCategory::Display:
-                    ImGui::Text("Dispaly Menu Options");
+                {
+                    ImGui::Text("Display Menu Options");
+
+                    const std::string& submenu = currentCategory;
+                    const std::vector<std::string> options = {
+                        "Show FPS",
+                    };
+
+                    static std::unordered_map<std::string, int> submenuSelectedIndices;
+                    int& submenuSelectedIndex = submenuSelectedIndices[submenu];
+
+                    HandleSubmenuInput(submenu, options, submenuSelectedIndex);
+
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 4));
+                    for (size_t i = 0; i < options.size(); i++)
+                    {
+                        const std::string& option = options[i];
+                        bool& optionState = submenuOptionStates[submenu][option];
+
+                        if (static_cast<int>(i) == submenuSelectedIndex)
+                        {
+                            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), " >");
+                        }
+                        else
+                        {
+                            ImGui::Text("  ");
+                        }
+                        ImGui::SameLine();
+
+                        ImGui::Text("%s: ", option.c_str());
+                        ImGui::SameLine();
+
+                        if (optionState)
+                            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ON");
+                        else
+                            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "OFF");
+                    }
+                    ImGui::PopStyleVar();
                     break;
+                }
                 case MenuCategory::Rendering:
                     ImGui::Text("Rendering Menu Options");
                     break;
@@ -224,7 +279,7 @@ void Drawing::Draw()
                     break;
                 case MenuCategory::Tasks:
                     ImGui::Text("Tasks Menu Options");
-                    break;                
+                    break;
                 default:
                     ImGui::Text("Use Left Arrow to go back.");
                 }
@@ -234,9 +289,13 @@ void Drawing::Draw()
         ImGui::PopStyleVar();
         ImGui::PopStyleColor(3);
     }
+
     ImGui::GetForegroundDrawList()->AddText(watermarkPos, ImColor(255, 255, 255), "Naughty Dog - Debug Menu ImGui Port by hoppers");
 
-    ImGui::PopFont();
+    if (submenuOptionStates["Display..."]["Show FPS"])
+    {
+        ImGui::GetForegroundDrawList()->AddText(ImVec2(watermarkPos.x, watermarkPos.y + ImGui::GetFontSize()), ImColor(255, 255, 255), std::format("Application average {:.3f} ms/frame ({:.1f} FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate).c_str());
+    }
 
     if (GetAsyncKeyState(VK_INSERT) & 1)
         bDraw = !bDraw;

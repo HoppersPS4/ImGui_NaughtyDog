@@ -184,6 +184,8 @@ void UI::Render()
 
     ImGui::GetIO().IniFilename = nullptr;
 
+    io.Fonts->AddFontFromFileTTF("debug.ttf", 44.0f);
+
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(pd3dDevice, pd3dDeviceContext);
 
