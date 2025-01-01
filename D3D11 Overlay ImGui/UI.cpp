@@ -1,5 +1,7 @@
 #include "UI.h"
 #include "Drawing.h"
+#include <iostream> // Include for std::cout
+
 
 ID3D11Device* UI::pd3dDevice = nullptr;
 ID3D11DeviceContext* UI::pd3dDeviceContext = nullptr;
@@ -124,10 +126,10 @@ void UI::Render()
 {
     ImGui_ImplWin32_EnableDpiAwareness();
 
-    #ifdef _WINDLL
+#ifdef _WINDLL
     if (hTargetWindow == nullptr)
         GetWindow();
-    #endif
+#endif
 
     WNDCLASSEX wc;
 
@@ -148,7 +150,7 @@ void UI::Render()
     const HWND hwnd = ::CreateWindowExW(WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE, wc.lpszClassName, _T("D3D11 Overlay ImGui"), WS_POPUP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), nullptr, nullptr, wc.hInstance, nullptr);
 
     SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
-    const MARGINS margin = {-1, 0, 0, 0};
+    const MARGINS margin = { -1, 0, 0, 0 };
     DwmExtendFrameIntoClientArea(hwnd, &margin);
 
     if (!CreateDeviceD3D(hwnd))
@@ -184,7 +186,11 @@ void UI::Render()
 
     ImGui::GetIO().IniFilename = nullptr;
 
-    io.Fonts->AddFontFromFileTTF("debug.ttf", 44.0f);
+    // ----- Custom font loading HERE -----
+    ImFont* loadedFont = io.Fonts->AddFontFromFileTTF("MyFont.ttf", 20.0f); // Filename, Px ~hoppers - Otherwise imgui will use default one.
+
+    Drawing::pFont = loadedFont;
+    // -----------------------------------
 
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(pd3dDevice, pd3dDeviceContext);
@@ -215,15 +221,15 @@ void UI::Render()
         if (bDone)
             break;
 
-        #ifdef _WINDLL 
+#ifdef _WINDLL 
         if (hTargetWindow != nullptr)
             MoveWindow(hwnd);
         else
             continue;
-        #else
+#else
         if (hTargetWindow != nullptr && bTargetSet)
             MoveWindow(hwnd);
-        #endif
+#endif
 
         if (!IsWindowFocus(hwnd) && bTargetSet)
         {

@@ -13,6 +13,10 @@ LPCSTR Drawing::lpWindowName = "Naughty Dog Debug Menu but ImGui";
 ImVec2 Drawing::vWindowSize = { 0, 0 };
 ImGuiWindowFlags Drawing::WindowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize;
 bool Drawing::bDraw = true;
+ImFont* Drawing::pFont = nullptr; // Initialize to nullptr, will be set after AddFontFromFileTTF
+UI::WindowItem Drawing::lpSelectedWindow; //Initialize the static variable.
+std::string Drawing::buildDate = __DATE__ " " __TIME__; // Initialize build date.
+
 
 std::unordered_map<std::string, int> selectedIndices;
 std::string currentCategory = "";
@@ -144,7 +148,7 @@ void HandleSubmenuInput(const std::string& submenu, const std::vector<std::strin
 void Drawing::Draw()
 {
     ImGuiViewport* viewport = ImGui::GetMainViewport();
-    watermarkPos = ImVec2(100, viewport->WorkSize.y - 100 - ImGui::GetFontSize());
+    watermarkPos = ImVec2(100, viewport->WorkSize.y - 100 - ImGui::GetFont()->FontSize);
 
     if (isActive())
     {
@@ -159,9 +163,11 @@ void Drawing::Draw()
 
         ImGui::Begin("Dev Menu", &bDraw, WindowFlags);
         {
+            // Push the custom font for the whole menu window.
+            if (pFont) ImGui::PushFont(pFont);
+
             ImGui::Text("Dev Menu");
             ImGui::Separator();
-
 
             if (currentCategory.empty())
             {
@@ -207,6 +213,8 @@ void Drawing::Draw()
                     const std::string& submenu = currentCategory;
                     const std::vector<std::string> options = {
                         "Show FPS",
+                        "Show Resolution",
+                        "Show Build Date"
                     };
 
                     static std::unordered_map<std::string, int> submenuSelectedIndices;
@@ -284,18 +292,35 @@ void Drawing::Draw()
                     ImGui::Text("Use Left Arrow to go back.");
                 }
             }
+            if (pFont) ImGui::PopFont();
         }
         ImGui::End();
         ImGui::PopStyleVar();
         ImGui::PopStyleColor(3);
     }
 
+    if (pFont) ImGui::PushFont(pFont);
     ImGui::GetForegroundDrawList()->AddText(watermarkPos, ImColor(255, 255, 255), "Naughty Dog - Debug Menu ImGui Port by hoppers");
-
+    float offset = ImGui::GetFont()->FontSize;
     if (submenuOptionStates["Display..."]["Show FPS"])
     {
-        ImGui::GetForegroundDrawList()->AddText(ImVec2(watermarkPos.x, watermarkPos.y + ImGui::GetFontSize()), ImColor(255, 255, 255), std::format("Application average {:.3f} ms/frame ({:.1f} FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate).c_str());
+        ImGui::GetForegroundDrawList()->AddText(ImVec2(watermarkPos.x, watermarkPos.y + offset), ImColor(255, 255, 255), std::format("Application average {:.3f} ms/frame ({:.1f} FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate).c_str());
+        offset += ImGui::GetFont()->FontSize;
     }
+
+    if (submenuOptionStates["Display..."]["Show Resolution"])
+    {
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::GetForegroundDrawList()->AddText(ImVec2(watermarkPos.x, watermarkPos.y + offset), ImColor(255, 255, 255), std::format("Resolution: {}x{}", viewport->WorkSize.x, viewport->WorkSize.y).c_str());
+        offset += ImGui::GetFont()->FontSize;
+    }
+
+    if (submenuOptionStates["Display..."]["Show Build Date"])
+    {
+        ImGui::GetForegroundDrawList()->AddText(ImVec2(watermarkPos.x, watermarkPos.y + offset), ImColor(255, 255, 255), std::format("Build Date: {}", buildDate).c_str());
+    }
+
+    if (pFont) ImGui::PopFont();
 
     if (GetAsyncKeyState(VK_INSERT) & 1)
         bDraw = !bDraw;
