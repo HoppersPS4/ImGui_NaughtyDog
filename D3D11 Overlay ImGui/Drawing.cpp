@@ -1,10 +1,13 @@
 #include "Drawing.h"
+
 #include <string>
 #include <unordered_map>
 #include <format>
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <windows.h>
+#include <vector>
 
 LPCSTR Drawing::lpWindowName = "Naughty Dog Debug Menu but ImGui";
 ImVec2 Drawing::vWindowSize = { 0, 0 };
@@ -30,7 +33,8 @@ enum class MenuCategory
     NavigatingCharacter,
     Camera,
     Cinematics,
-    Tasks
+    Tasks,
+    Example,
 };
 
 std::unordered_map<std::string, MenuCategory> menuCategoryMap = {
@@ -47,7 +51,7 @@ std::unordered_map<std::string, MenuCategory> menuCategoryMap = {
     {"Navigating Character...", MenuCategory::NavigatingCharacter},
     {"Camera...", MenuCategory::Camera},
     {"Cinematics...", MenuCategory::Cinematics},
-    {"Tasks...", MenuCategory::Tasks},
+    {"Tasks...", MenuCategory::Tasks}
 };
 
 std::vector<std::string> mainMenuItems = {
@@ -149,7 +153,7 @@ void Drawing::Draw()
                 for (size_t i = 0; i < mainMenuItems.size(); i++)
                 {
                     if (i == selectedIndex)
-                        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "> ");
+                        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), " >");
                     else
                         ImGui::Text("  ");
 
@@ -180,10 +184,8 @@ void Drawing::Draw()
                 switch (menuCategoryMap[currentCategory])
                 {
                 case MenuCategory::Display:
-                {
-                    ImGui::Text("Display Menu Options");
+                    ImGui::Text("Dispaly Menu Options");
                     break;
-                }
                 case MenuCategory::Rendering:
                     ImGui::Text("Rendering Menu Options");
                     break;
@@ -191,10 +193,8 @@ void Drawing::Draw()
                     ImGui::Text("Engine Menu Options");
                     break;
                 case MenuCategory::PlayerMenu:
-                {
                     ImGui::Text("Player Menu Options");
                     break;
-                }
                 case MenuCategory::Weapons:
                     ImGui::Text("Weapons Menu Options");
                     break;
@@ -224,7 +224,7 @@ void Drawing::Draw()
                     break;
                 case MenuCategory::Tasks:
                     ImGui::Text("Tasks Menu Options");
-                    break;
+                    break;                
                 default:
                     ImGui::Text("Use Left Arrow to go back.");
                 }
